@@ -46,10 +46,10 @@ var main = function(){
 
 	var colDetection = function(first, second){
 		//Check for Collision
-		if(first.x < second.x + first.w &&
+		if(first.x < second.x + second.w &&
 			first.x + first.w > second.x &&
 			first.y < second.y + second.h &&
-			first.y + second.h > second.y){
+			first.y + first.h > second.y){
 			return true;
 		};
 		
@@ -92,6 +92,12 @@ var main = function(){
 	
 	loop(infinate, 120, function(){
 		clearImg(ball);
+
+		//Change direciton if at top or bottom of screen of screen
+		if(ball.y < 0 || (ball.y + ball.h) > 500){
+			ball.dirY = -ball.dirY;
+		}
+
 		ball.x += ball.dirX;
 		ball.y += ball.dirY;
 		//Determine which paddle to check collision for.
@@ -102,10 +108,7 @@ var main = function(){
 			ball.dirY = -ball.dirY + getRandNum(5);
 
 		}
-		//Change direciton if at top or bottom of screen of screen
-		if(ball.y < 0 || (ball.y + ball.h) > 500){
-			ball.y = -ball.y;
-		}
+		
 		draw(ball.x, ball.y, ball.w, ball.h, 'white');
 
 		if(multiplayer){

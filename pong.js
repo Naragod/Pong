@@ -8,7 +8,7 @@ var context = canvas.getContext('2d');
 canvas.style.position = 'absolute';
 canvas.style.left = 600 + 'px';
 canvas.style.top = 150 + 'px';
-//Set this to true multiplayer
+//Set this to true for multiplayer
 var multiplayer = true;
 
 //
@@ -108,7 +108,7 @@ var main = function(){
 		}
 		draw(ball.x, ball.y, ball.w, ball.h, 'white');
 
-		if(!multiplayer){
+		if(multiplayer){
 			return;
 		}
 

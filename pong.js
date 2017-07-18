@@ -1,47 +1,57 @@
 
 
 
-var canvas = $('#canvasOne')[0];
+var canvas = $("#canvasOne")[0];
 var context = canvas.getContext('2d');
 
-//Reposition the canvas
+//Center the canvas
 canvas.style.position = 'absolute';
-canvas.style.left = 600 + 'px';
-canvas.style.top = 150 + 'px';
-//Set this to true for multiplayer
-var multiplayer = true;
+var cw = (window.innerWidth/2) - (canvas.width / 2);
+var ch = (window.innerHeight/2) - (canvas.height / 2);
+canvas.style.left = cw + 'px';
+canvas.style.top = ch + 'px';
 
-//
-var infinate = 1001;
-var temporary = 10;
+//Game settings
+//**************************************************************************************************
+//Set this to true for multiplayer
+var multiplayer = false;
+//Set to less than 1001 for testing purposes
+var repetitions = 1001;
+//Difficulty. With 1 being the easiest and 1 being impossible to beat.
+var difficulty = 1;
 
 var main = function(){
+
+
 	//Left paddle
 	var leftPaddle = {
 		x:70,
 	 	y:240,
 	 	w:10,
-	 	h:40
+	 	h:40,
+	 	score:0
 	};
 	//Right Paddle
 	var rightPaddle = {
 	 	x:510,
 	 	y:240,
-	 	w:10,
-	 	h:40
+	 	w:10 ,
+	 	h:40,
+	 	score:0
 	};
 	var ball = {
-		x:150,
-	 	y:240,
+		x:80,
+	 	y:260,
 	 	w:15,
 	 	h:15,
-	 	speed:15,
+	 	speed:8,
 	 	dirX:0,
-	 	dirY:0
+	 	dirY:0,
+	 	turn: 'left'
 	}
 
 	var getRandNum = function(range){
-	 	return Math.floor((Math.random() * (range - 1)) + 1);
+	 	return Math.floor(Math.random() * (range-1) + 1);
 	}
 
 	var colDetection = function(first, second){
@@ -65,7 +75,10 @@ var main = function(){
 	 		times += 1;
 	 	}
 	 	if(callback){
-	 		callback();
+	 		var finish = callback();
+	 		if(finish){
+	 			return;
+	 		}
 	 		setTimeout(function(){
 	 			loop(times - 1, interval, callback);
 	 		}, interval);	 	}
@@ -84,47 +97,92 @@ var main = function(){
 	 	draw(paddle.x, paddle.y, paddle.w, paddle.h, 'black');
 	}
 
-	//Randomize direction of ball
- 	var rand = getRandNum(ball.speed);
- 	ball.dirX = rand;
-	ball.dirY = rand - ball.speed;
+	var newGame = function(){
 
+	}
 	
-	loop(infinate, 120, function(){
-		clearImg(ball);
 
-		//Change direciton if at top or bottom of screen of screen
-		if(ball.y < 0 || (ball.y + ball.h) > 500){
-			ball.dirY = -ball.dirY;
-		}
-
-		ball.x += ball.dirX;
-		ball.y += ball.dirY;
-		//Determine which paddle to check collision for.
-		var second = ball.dirX > 0 ? rightPaddle : leftPaddle;
-		//Check Collision
-		if(colDetection(ball, second)){
-			ball.dirX = -ball.dirX
-			ball.dirY = -ball.dirY + getRandNum(5);
-
+	$('#newGameBtn').click(function(){
+		//Set initial position of ball.
+		ball.x = rightPaddle.x - ball.w;
+		ball.y = rightPaddle.y + rightPaddle.w/2;
+		ball.dirX = -5;
+		ball.dirY = Math.random() < 0.5 ? 10 : -10;
+		if(ball.turn == 'left'){
+			ball.x = leftPaddle.x + leftPaddle.w;
+			ball.y = leftPaddle.y + leftPaddle.h/2;
+			ball.dirX = 5;
 		}
 		
-		draw(ball.x, ball.y, ball.w, ball.h, 'white');
+		//Randomize direction of ball
+ 		var rand = getRandNum(ball.speed);
+ 		ball.dirX = rand;
+		ball.dirY = rand - ball.speed;
 
-		if(multiplayer){
-			return;
-		}
+		loop(repetitions, 20, function(){
+			clearImg(ball);
+			//Bounce ball if at top or bottom of screen.
+			if(ball.y < 0 || (ball.y + ball.h) > 500){
+				ball.dirY = -ball.dirY;
+			}
 
-		clearImg(rightPaddle);
-		var diff = ball.y - rightPaddle.y;
-		//Track the ball
-		if(diff != 0){
-			rightPaddle.y = diff > 0 ? rightPaddle.y + 10: rightPaddle.y - 10;
-		}
-		draw(rightPaddle.x, rightPaddle.y, rightPaddle.w, rightPaddle.h, 'white');
-		console.log("Looping");
+			ball.x += ball.dirX;
+			ball.y += ball.dirY;
+			//Determine which paddle to check collision for.
+			var ballDirection = ball.dirX > 0;
+			var paddle = ball.dirX > 0 ? rightPaddle : leftPaddle;
+			//Check Collision
+			if(colDetection(ball, paddle)){
+				//Increase the speed of the ball;
+				//ball.speed = ball.speed > 0 ? ball.speed + 1 : ball.speed - 1;
+				//ball.speed = -ball.speed;
+				ball.dirX = -ball.dirX// + ball.speed;
+				ball.dirY = -ball.dirY + getRandNum(5);
+				//Ball travelling right.
+				if(ballDirection){
+					ball.x = paddle.x - ball.w;
+				}
+				//Ball travlleing left.
+				else{
+					ball.x = paddle.x + paddle.w;
+				}
+			}
+
+			var scoreboard = $('#score');
+			//Check goal
+			//leftPaddle scored on rightPaddle
+			if(ball.x > canvas.width){
+				leftPaddle.score += 1;
+				scoreboard.text('Left: ' + leftPaddle.score + ', Right: ' + rightPaddle.score);
+				ball.turn = 'right'
+				return true;
+
+			}
+			else if(ball.x < 15){
+				rightPaddle.score += 1;
+				scoreboard.text('Left: ' + leftPaddle.score + ', Right: ' + rightPaddle.score);
+				ball.turn = 'left';
+				return true;
+			}
+
+			draw(ball.x, ball.y, ball.w, ball.h, 'grey');
+
+			if(multiplayer){
+				return;
+			}
+			//Single player mode.
+			clearImg(rightPaddle);
+			var diff = ball.y - rightPaddle.y;
+			//Track the ball
+			if(diff != 0 && (Math.random() <= difficulty)){
+				rightPaddle.y = diff > 0 ? rightPaddle.y + 10: rightPaddle.y - 10;
+			}
+			draw(rightPaddle.x, rightPaddle.y, rightPaddle.w, rightPaddle.h, 'white');
+
+			console.log("Looping", scoreboard);
+		});
+
 	});
-
 
 	$('html').keydown(function(e){
 	 	var key = e.which;
@@ -167,7 +225,7 @@ var main = function(){
 	draw(rightPaddle.x, rightPaddle.y, rightPaddle.w, rightPaddle.h, 'white');
 
 	//Draw ball
-	draw(ball.x, ball.y, ball.w, ball.h, 'white');
+	draw(ball.x, ball.y, ball.w, ball.h, 'blue');
 
 }
 
